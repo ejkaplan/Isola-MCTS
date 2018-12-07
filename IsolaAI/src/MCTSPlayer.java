@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -8,8 +9,8 @@ import processing.core.PApplet;
 
 public class MCTSPlayer extends Player {
 
-	private static final int MAX_TIME = 10000;
-	private static final double C = Math.sqrt(2);
+	private static final int MAX_TIME = 3000;
+	private static final double C = 1;
 	private Random r;
 	private static Set<GameState> usedStates;
 
@@ -32,12 +33,16 @@ public class MCTSPlayer extends Player {
 			backpropogation(node, winner);
 		}
 		MCTSNode best = root.children.get(0);
+		double bestScore = 0;
 		for (MCTSNode node : root.children) {
-			if (node.visits > best.visits) {
+			// double score = node.visits;
+			double score = (double) node.wins / node.visits;
+			if (score > bestScore) {
+				bestScore = score;
 				best = node;
 			}
 		}
-		System.out.println(best);
+		System.out.println(best + ", " + root.visits);
 		return new Coordinate[] { best.move, best.erase };
 	}
 
@@ -66,10 +71,12 @@ public class MCTSPlayer extends Player {
 			MCTSNode child = new MCTSNode(node, opt[0], opt[1]);
 			node.children.add(child);
 		}
+//		Collections.shuffle(node.children);
+		Collections.sort(node.children);
 		return node.children.get(r.nextInt(node.children.size()));
 	}
 
-	public Player simulation(MCTSNode node) {
+	public Player simulation(MCTSNode node) { // Totally random simulation
 		GameState state = node.gameState;
 		while (state.getWinner() == null) {
 			List<Coordinate[]> opts = state.allLegal();
@@ -88,14 +95,15 @@ public class MCTSPlayer extends Player {
 		}
 	}
 
-	private class MCTSNode {
+	private class MCTSNode implements Comparable<MCTSNode> {
 
 		private GameState gameState;
 		private Coordinate move;
 		private Coordinate erase;
 		private MCTSNode parent;
 		private List<MCTSNode> children;
-		int wins, visits;
+		private int wins, visits;
+		private Player active, inactive;
 
 		public MCTSNode(GameState gameState) {
 			this.gameState = gameState;
@@ -105,6 +113,8 @@ public class MCTSPlayer extends Player {
 			children = new ArrayList<MCTSNode>();
 			wins = 0;
 			visits = 0;
+			active = gameState.getCurrentPlayer();
+			inactive = gameState.getInactivePlayer();
 		}
 
 		public MCTSNode(MCTSNode parent, Coordinate move, Coordinate erase) {
@@ -122,7 +132,14 @@ public class MCTSPlayer extends Player {
 
 		@Override
 		public String toString() {
-			return "MCTSNode [children=" + children.size() + ", wins=" + wins + ", visits=" + visits + "]";
+			return "MCTSNode [children=" + children.size() + ", wins=" + wins + ", visits=" + visits + ", pwin="
+					+ 100 * wins / visits + "%]";
+		}
+
+		@Override
+		public int compareTo(MCTSNode other) {
+			return (gameState.legalMoves(inactive).size() - gameState.legalMoves(active).size())
+					- (other.gameState.legalMoves(inactive).size() - other.gameState.legalMoves(active).size());
 		}
 
 	}

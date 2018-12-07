@@ -13,7 +13,7 @@ public class IsolaRunner extends PApplet {
 	}
 
 	public void setup() {
-		game = new IsolaGame(this, new HumanPlayer(this, color(255,0,0)), new MCTSPlayer(this, color(0,0,255)));
+		game = new IsolaGame(this, new MCTSPlayer(this, color(0, 0, 255)), new RandomPlayer(this, color(255, 0, 255)));
 	}
 
 	public void draw() {

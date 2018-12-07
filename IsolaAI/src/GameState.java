@@ -59,6 +59,10 @@ public class GameState {
 		return turnOrder[turn];
 	}
 
+	public Player getInactivePlayer() {
+		return turnOrder[1 - turn];
+	}
+
 	public Coordinate getPosition(Player p) {
 		return players.get(p);
 	}
@@ -82,7 +86,9 @@ public class GameState {
 
 	public GameState makeMove(Coordinate move, Coordinate erase) {
 		Player currPlayer = turnOrder[turn];
-		if (board[erase.getX()][erase.getY()] || !legalMoves(currPlayer).contains(move) || move.equals(erase)) {
+		Player enemyPlayer = turnOrder[1 - turn];
+		if (board[erase.getX()][erase.getY()] || !legalMoves(currPlayer).contains(move) || move.equals(erase)
+				|| players.get(enemyPlayer).equals(erase)) {
 			winner = turnOrder[1 - turn];
 			System.out.println(
 					"Illegal move: Can't move from " + players.get(currPlayer) + " to " + move + " and erase " + erase);
@@ -102,7 +108,8 @@ public class GameState {
 			for (int y = 0; y < board[0].length; y++) {
 				float squareX = PApplet.map(x, 0, board.length, 0, parent.width);
 				float squareY = PApplet.map(y, 0, board[0].length, 0, parent.height);
-				parent.fill(board[x][y] ? 50 : 200);
+				int chequer = x % 2 == y % 2 ? 150 : 200;
+				parent.fill(board[x][y] ? 0 : chequer);
 				parent.rect(squareX, squareY, squareW, squareH);
 			}
 		}
@@ -130,7 +137,8 @@ public class GameState {
 
 	public List<Coordinate[]> allLegal() {
 		List<Coordinate[]> legal = new ArrayList<Coordinate[]>();
-		if (getWinner() != null) return legal;
+		if (getWinner() != null)
+			return legal;
 		for (Coordinate m : legalMoves(getCurrentPlayer())) {
 			for (int x = 0; x < getBoardWidth(); x++) {
 				for (int y = 0; y < getBoardHeight(); y++) {
